@@ -45,7 +45,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (nextReady && !authLoading && user) {
-      router.replace(next ?? "/projects");
+      router.replace(next ?? "/app");
     }
   }, [user, authLoading, router, next, nextReady]);
 
@@ -53,8 +53,14 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
-      router.replace(next ?? "/projects");
+      const cred = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+      const idToken = await cred.user.getIdToken();
+      await fetch("/app/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      router.replace(next ?? "/app");
     } catch (error) {
       const authError = error as AuthError;
       let errorMessage = "An unexpected error occurred.";
