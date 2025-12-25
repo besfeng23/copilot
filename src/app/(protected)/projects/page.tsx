@@ -20,7 +20,7 @@ import {
   Code,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { ProjectCard, ProjectListItem } from "@/components/project-card";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
@@ -98,7 +98,7 @@ export default function ProjectsPage() {
   }, []);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await signOut(getFirebaseAuth());
     router.push("/login");
   };
   
