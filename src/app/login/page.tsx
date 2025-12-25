@@ -11,13 +11,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Rocket } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+
+function getSafeNextParam(searchParams: URLSearchParams): string | null {
+  const next = searchParams.get("next");
+  if (!next) return null;
+  if (!next.startsWith("/")) return null;
+  if (next.startsWith("//")) return null;
+  if (next.startsWith("/login") || next.startsWith("/signup")) return null;
+  return next;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,19 +35,26 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const [next, setNext] = useState<string | null>(null);
+  const [nextReady, setNextReady] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/projects');
+    setNext(getSafeNextParam(new URLSearchParams(window.location.search)));
+    setNextReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (nextReady && !authLoading && user) {
+      router.replace(next ?? "/projects");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, next, nextReady]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/projects");
+      await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+      router.replace(next ?? "/projects");
     } catch (error) {
       const authError = error as AuthError;
       let errorMessage = "An unexpected error occurred.";
