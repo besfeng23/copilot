@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
-
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  return NextResponse.json({
-    ok: true,
-    now: new Date().toISOString(),
+import { jsonOk } from '@/app/api/_lib/http';
+import { ensurePersonalOrgForCaller } from '@/app/api/_lib/authz';
+
+export async function POST(req: Request) {
+  const ctx = await ensurePersonalOrgForCaller(req);
+  if (ctx instanceof Response) return ctx;
+  return jsonOk({
+    orgId: ctx.orgId,
+    role: ctx.role,
   });
 }
+
 
