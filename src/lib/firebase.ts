@@ -10,7 +10,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+const isBrowser = typeof window !== 'undefined';
+const hasConfig = Object.values(firebaseConfig).every((v) => typeof v === 'string' && v.length > 0);
+
+// During `next build`, modules can be evaluated server-side. Avoid initializing the
+// client SDK unless we are in the browser and have config, otherwise the build
+// can fail with "auth/invalid-api-key".
+const app = (isBrowser && hasConfig ? (!getApps().length ? initializeApp(firebaseConfig) : getApp()) : undefined) as ReturnType<
+  typeof getApp
+>;
+const auth = (isBrowser && hasConfig ? getAuth(app) : undefined) as ReturnType<typeof getAuth>;
 
 export { app, auth };
