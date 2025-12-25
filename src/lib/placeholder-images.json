@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "Abstract technology background for QuantumLeap project",
+      "imageUrl": "https://images.unsplash.com/photo-1510906594845-bc082582c8cc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx0ZWNobm9sb2d5JTIwYWJzdHJhY3R8ZW58MHx8fHwxNzY2NjAxNzEzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "technology abstract"
+    },
+    {
+      "id": "2",
+      "description": "Lush green forest for EcoTrack project",
+      "imageUrl": "https://images.unsplash.com/photo-1600711503545-b13de35dac05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxuYXR1cmUlMjBmb3Jlc3R8ZW58MHx8fHwxNzY2NjAzNDg3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "nature forest"
+    },
+    {
+      "id": "3",
+      "description": "Medical science concept for HealthSphere project",
+      "imageUrl": "https://images.unsplash.com/photo-1575468130797-aa950b68aeec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtZWRpY2FsJTIwc2NpZW5jZXxlbnwwfHx8fDE3NjY2NTYxOTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "medical science"
+    },
+    {
+      "id": "4",
+      "description": "Financial chart for FinWiz project",
+      "imageUrl": "https://images.unsplash.com/photo-1642060721266-52efed86917e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZmluYW5jZSUyMG1vbmV5fGVufDB8fHx8MTc2NjY1NjE5OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "finance money"
+    },
+    {
+      "id": "5",
+      "description": "Lines of code for CodeCollab project",
+      "imageUrl": "https://images.unsplash.com/photo-1675495277087-10598bf7bcd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2RlJTIwcHJvZ3JhbW1pbmd8ZW58MHx8fHwxNzY2NTU5NjIwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "code programming"
+    },
+    {
+      "id": "6",
+      "description": "Colorful abstract art for Artify project",
+      "imageUrl": "https://images.unsplash.com/photo-1705254613723-776cb9dc93d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhcnQlMjBjb2xvcmZ1bHxlbnwwfHx8fDE3NjY2Mzk1NzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art colorful"
+    }
+  ]
 }
