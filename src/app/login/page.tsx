@@ -53,7 +53,18 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        toast({
+          title: "Application Error",
+          description:
+            "Firebase client is not configured. Set the required NEXT_PUBLIC_FIREBASE_* env vars in Vercel and redeploy.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const cred = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await cred.user.getIdToken();
       await fetch("/app/api/auth/session", {
         method: "POST",

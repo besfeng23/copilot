@@ -7,51 +7,66 @@ export async function GET(req: Request) {
   const { requireAuth, getUserOrgRoles, ensurePersonalBootstrap } = await import(
     "@/lib/auth/server"
   );
-  const { getAdminDb } = await import("@/lib/firebase/admin");
-  const adminDb = getAdminDb();
+  const { getAdminDb, FirebaseAdminError } = await import("@/lib/firebase/admin");
 
-  const decoded = await requireAuth(req).catch(() => null);
-  if (!decoded) {
-    return NextResponse.json(
-      { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
-      { status: 401 }
-    );
-  }
+  try {
+    const adminDb = getAdminDb();
 
-  // Ensure there is at least one org/project (personal bootstrap) so the dashboard can function.
-  await ensurePersonalBootstrap({ uid: decoded.uid, email: decoded.email ?? null });
+    const decoded = await requireAuth(req).catch(() => null);
+    if (!decoded) {
+      return NextResponse.json(
+        { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
+        { status: 401 }
+      );
+    }
 
-  const orgRoles = await getUserOrgRoles(decoded.uid);
+    // Ensure there is at least one org/project (personal bootstrap) so the dashboard can function.
+    await ensurePersonalBootstrap({ uid: decoded.uid, email: decoded.email ?? null });
 
-  const orgs = await Promise.all(
-    orgRoles.map(async ({ orgId, role }) => {
-      const orgSnap = await adminDb.doc(`orgs/${orgId}`).get();
-      const orgName = (orgSnap.data()?.name as string | undefined) ?? orgId;
+    const orgRoles = await getUserOrgRoles(decoded.uid);
 
-      const projectsSnap = await adminDb
-        .collection(`orgs/${orgId}/projects`)
-        .orderBy("createdAt", "desc")
-        .limit(50)
-        .get()
-        .catch(async () => {
-          // If createdAt is missing for older docs, fall back to unordered listing.
-          return await adminDb.collection(`orgs/${orgId}/projects`).limit(50).get();
+    const orgs = await Promise.all(
+      orgRoles.map(async ({ orgId, role }) => {
+        const orgSnap = await adminDb.doc(`orgs/${orgId}`).get();
+        const orgName = (orgSnap.data()?.name as string | undefined) ?? orgId;
+
+        const projectsSnap = await adminDb
+          .collection(`orgs/${orgId}/projects`)
+          .orderBy("createdAt", "desc")
+          .limit(50)
+          .get()
+          .catch(async () => {
+            // If createdAt is missing for older docs, fall back to unordered listing.
+            return await adminDb.collection(`orgs/${orgId}/projects`).limit(50).get();
+          });
+
+        const projects = projectsSnap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            name: (data.name as string | undefined) ?? d.id,
+            goal: (data.goal as string | undefined) ?? null,
+          };
         });
 
-      const projects = projectsSnap.docs.map((d) => {
-        const data = d.data() as any;
-        return {
-          id: d.id,
-          name: (data.name as string | undefined) ?? d.id,
-          goal: (data.goal as string | undefined) ?? null,
-        };
-      });
+        return { id: orgId, name: orgName, role, projects };
+      })
+    );
 
-      return { id: orgId, name: orgName, role, projects };
-    })
-  );
-
-  return NextResponse.json({ ok: true, orgs });
+    return NextResponse.json({ ok: true, orgs });
+  } catch (err) {
+    if (err instanceof FirebaseAdminError) {
+      return NextResponse.json(
+        {
+          code: err.code,
+          message: err.message,
+          missing: err.missing,
+        },
+        { status: 500 }
+      );
+    }
+    throw err;
+  }
 }
 
 const CreateProjectBodySchema = z.object({
@@ -63,6 +78,7 @@ const CreateProjectBodySchema = z.object({
 export async function POST(req: Request) {
   const { requireAuth } = await import("@/lib/auth/server");
   const { createProject } = await import("@/lib/projects/server");
+  const { FirebaseAdminError } = await import("@/lib/firebase/admin");
 
   const decoded = await requireAuth(req).catch((err: any) => {
     const status = typeof err?.status === "number" ? err.status : 401;
@@ -91,6 +107,16 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, project });
   } catch (err: any) {
+    if (err instanceof FirebaseAdminError) {
+      return NextResponse.json(
+        {
+          code: err.code,
+          message: err.message,
+          missing: err.missing,
+        },
+        { status: 500 }
+      );
+    }
     const status = typeof err?.status === "number" ? err.status : 400;
     return NextResponse.json(
       { ok: false, code: "CREATE_PROJECT_FAILED", message: err?.message ?? "Create project failed." },
