@@ -16,8 +16,8 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const decoded = await requireAuth(req).catch((err: any) => {
-    const status = typeof err?.status === "number" ? err.status : 401;
+  const decoded = await requireAuth(req).catch((err: unknown) => {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 401;
     return NextResponse.json(
       { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
       { status }
@@ -37,8 +37,8 @@ export async function POST(req: Request) {
   const { orgId, projectId, kind, payload, memoryId } = parsed.data;
 
   // Role permissions: must be a member (or higher) to write.
-  await requireOrgRole(decoded.uid, orgId, { minRole: "member" }).catch((err: any) => {
-    const status = typeof err?.status === "number" ? err.status : 403;
+  await requireOrgRole(decoded.uid, orgId, { minRole: "member" }).catch((err: unknown) => {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 403;
     throw Object.assign(new Error("Forbidden"), { status });
   });
 
@@ -75,10 +75,14 @@ export async function POST(req: Request) {
       payload,
     });
     return NextResponse.json({ ok: true, created: true, id });
-  } catch (err: any) {
-    const status = typeof err?.status === "number" ? err.status : 400;
+  } catch (err: unknown) {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 400;
     return NextResponse.json(
-      { ok: false, code: "WRITE_FAILED", message: err?.message ?? "Write failed." },
+      {
+        ok: false,
+        code: "WRITE_FAILED",
+        message: err instanceof Error ? err.message : "Write failed.",
+      },
       { status }
     );
   }
