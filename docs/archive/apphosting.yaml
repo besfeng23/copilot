@@ -1,0 +1,7 @@
+# Archived: Firebase App Hosting config (not used for Vercel deployments).
+# Original reference: https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  maxInstances: 1
+
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onIdTokenChanged, type User } from 'firebase/auth';
 import { getFirebaseAuth } from './firebase';
 import { getMissingFirebaseClientEnvKeys, REQUIRED_FIREBASE_CLIENT_ENV_KEYS } from './firebase/client';
 
@@ -31,8 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
+
+      // Keep the httpOnly session cookie (used by edge middleware + server APIs) in sync with Firebase Auth.
+      // This prevents redirect loops where Firebase Auth is logged-in but the cookie has expired/cleared.
+      if (user) {
+        try {
+          const idToken = await user.getIdToken();
+          await fetch("/app/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch {
+          // Don't block rendering on cookie sync failures; API routes will still return 401/500 appropriately.
+        }
+      }
+
       setLoading(false);
     });
 

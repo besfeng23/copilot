@@ -55,6 +55,12 @@ You can self-diagnose missing keys via:
 - `GET /api/health/env` (JSON, names only)
 - `/env-check` (UI, names only)
 
+### Local development
+
+There is a template at `.env.example` (and also `docs/env.local.example`). Copy it to a local `.env.local` file (don’t commit it), then start Next.js.
+
+Node version: this repo targets **Node.js 20.x** (see `package.json#engines` and `.nvmrc`).
+
 ### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -80,6 +86,22 @@ You can self-diagnose missing keys via:
   - `OPENAI_API_KEY`
   - `OPENAI_PLAN_MODEL` (optional, default: `gpt-4.1-mini`)
   - `OPENAI_TRANSCRIBE_MODEL` (optional, default: `whisper-1`)
+  - `OPENAI_EMBEDDING_MODEL` (optional, default: `text-embedding-3-small`)
+
+### Admin: Memories Console
+
+There is an admin-only CRUD console at **`/admin/memories`** (also linked from `/app` when you are an org `admin`/`owner`).
+
+Data lives under:
+
+- `orgs/{orgId}/memories/{memoryId}`
+- `orgs/{orgId}/people/{personId}`
+- `orgs/{orgId}/tags/{tagId}`
+- `orgs/{orgId}/memoryEmbeddings/{memoryId}` (optional)
+
+### Firebase security rules examples
+
+See `docs/firebase/firestore.rules.example` for an **admin-only** rules baseline for the Memories module.
 
 ### Example plan JSON output (strict)
 

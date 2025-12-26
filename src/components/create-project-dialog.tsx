@@ -74,7 +74,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         });
         setOpen(false);
         form.reset();
-    } catch (error) {
+    } catch {
         toast({
             title: "Error",
             description: "Failed to create the project. Please try again.",

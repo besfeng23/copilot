@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(orgId) {
+      return get(/databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid));
+    }
+
+    function isOrgMember(orgId) {
+      return signedIn() && memberDoc(orgId).exists();
+    }
+
+    function isOrgAdmin(orgId) {
+      return isOrgMember(orgId) && (
+        memberDoc(orgId).data.role in ['admin', 'owner']
+      );
+    }
+
+    // Default: deny everything.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Memories Console (recommended: admin-only reads+writes) ---
+    match /orgs/{orgId}/memories/{memoryId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/people/{personId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/tags/{tagId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/memoryEmbeddings/{memoryId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    // --- Existing org membership (example) ---
+    match /orgs/{orgId}/members/{uid} {
+      // Members can read their own membership doc; admins can read all.
+      allow read: if signedIn() && (request.auth.uid == uid || isOrgAdmin(orgId));
+      // Writes: typically server-only. If you want client writes, scope tightly.
+      allow write: if false;
+    }
+  }
+}
+
+

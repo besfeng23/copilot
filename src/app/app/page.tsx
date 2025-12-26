@@ -70,6 +70,7 @@ export default function CopilotDashboardPage() {
     () => selectedOrg?.projects.find((p) => p.id === projectId) ?? null,
     [selectedOrg, projectId]
   );
+  const isAdmin = selectedOrg?.role === "admin" || selectedOrg?.role === "owner";
 
   useEffect(() => {
     if (authLoading) return;
@@ -165,6 +166,13 @@ export default function CopilotDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/admin/memories")}
+            disabled={!isAdmin}
+          >
+            Memories Console
+          </Button>
           <Button variant="secondary" onClick={() => router.push("/projects/new")}>
             New Project
           </Button>
