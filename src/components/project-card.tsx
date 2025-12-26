@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Project } from "@/app/(protected)/projects/page";
+import type { Project } from "@/lib/types/projects";
 import { cn } from "@/lib/utils";
 import { Github } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";

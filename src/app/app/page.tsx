@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
+import { fetchJson } from "@/lib/api/client";
 
 type OrgProject = { id: string; name: string; goal: string | null };
 type Org = { id: string; name: string; role: string; projects: OrgProject[] };
@@ -43,16 +44,6 @@ type NextAction = {
   rationale: string;
   requiredWrites: Array<{ kind: string; payload: unknown }>;
 };
-
-async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = (json?.message as string | undefined) ?? `Request failed (${res.status})`;
-    throw new Error(msg);
-  }
-  return json as T;
-}
 
 export default function CopilotDashboardPage() {
   const router = useRouter();
@@ -170,9 +161,14 @@ export default function CopilotDashboardPage() {
             One best next action, backed by append-only memory.
           </p>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => router.push("/projects/new")}>
+            New Project
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            Logout
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">

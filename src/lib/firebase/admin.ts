@@ -3,6 +3,7 @@ import 'server-only';
 import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import type { ServiceAccount } from 'firebase-admin';
 
 function readServiceAccountFromEnv(): ServiceAccount {
@@ -58,11 +59,13 @@ let cachedAdminApp: ReturnType<typeof getApp> | null = null;
 export function getAdminApp() {
   if (cachedAdminApp) return cachedAdminApp;
 
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
   cachedAdminApp =
     getApps().length > 0
       ? getApp()
       : initializeApp({
           credential: cert(readServiceAccountFromEnv()),
+          storageBucket: storageBucket && storageBucket.trim().length ? storageBucket : undefined,
         });
 
   return cachedAdminApp;
@@ -74,5 +77,9 @@ export function getAdminAuth() {
 
 export function getAdminDb() {
   return getFirestore(getAdminApp());
+}
+
+export function getAdminStorage() {
+  return getStorage(getAdminApp());
 }
 
