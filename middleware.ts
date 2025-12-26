@@ -47,6 +47,9 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/api/config") {
     return NextResponse.next();
   }
+  if (pathname === "/api/diag/env") {
+    return NextResponse.next();
+  }
   if (pathname.startsWith("/api/") || pathname.startsWith("/app/api/")) {
     return NextResponse.next();
   }
