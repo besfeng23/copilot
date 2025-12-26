@@ -78,7 +78,6 @@ Node version: this repo targets **Node.js 20.x** (see `package.json#engines` and
 ### Local dev quickstart (degraded mode ok)
 
 This app should **start and build without secrets**. First validation step: visit **`/config`**.
-
 ### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
