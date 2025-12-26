@@ -95,8 +95,9 @@ export default function CopilotDashboardPage() {
         const fallbackProject = data.orgs[0]?.projects[0]?.id ?? "";
         setOrgId((prev) => prev || fallbackOrg);
         setProjectId((prev) => prev || fallbackProject);
-      } catch (err: any) {
-        toast({ title: "Failed to load projects", description: err.message, variant: "destructive" });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error.";
+        toast({ title: "Failed to load projects", description: message, variant: "destructive" });
         setOrgs([]);
       }
     })();
@@ -124,8 +125,9 @@ export default function CopilotDashboardPage() {
         }
       );
       setNextAction(next.nextAction);
-    } catch (err: any) {
-      toast({ title: "Failed to refresh", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error.";
+      toast({ title: "Failed to refresh", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

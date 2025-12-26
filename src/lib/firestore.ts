@@ -60,9 +60,9 @@ export type TruthPack = {
 
 function tsToIso(v: unknown): string {
   if (v instanceof Timestamp) return v.toDate().toISOString();
-  if (v && typeof v === "object" && "toDate" in (v as any)) {
+  if (v && typeof v === "object" && typeof (v as { toDate?: unknown }).toDate === "function") {
     try {
-      return (v as any).toDate().toISOString();
+      return (v as { toDate: () => Date }).toDate().toISOString();
     } catch {
       // fall through
     }
@@ -75,21 +75,28 @@ function memoryCol(orgId: string, projectId: string) {
 }
 
 function parseMemoryItem(doc: FirebaseFirestore.QueryDocumentSnapshot): MemoryItem {
-  const data = doc.data() as any;
+  const data = doc.data() as Record<string, unknown>;
   const kind = MemoryKindSchema.parse(data.kind);
-  const payloadSchema = (MemoryPayloadSchemaByKind as any)[kind] as z.ZodTypeAny;
+  const payloadSchema = MemoryPayloadSchemaByKind[kind];
   const payload = payloadSchema.parse(data.payload);
+
+  const createdByRaw = data.createdBy;
+  const createdBy =
+    createdByRaw && typeof createdByRaw === "object"
+      ? {
+          uid: String((createdByRaw as { uid?: unknown }).uid ?? ""),
+          email:
+            typeof (createdByRaw as { email?: unknown }).email === "string"
+              ? ((createdByRaw as { email: string }).email as string)
+              : null,
+        }
+      : undefined;
   return {
     id: doc.id,
     kind,
     payload,
     createdAt: tsToIso(data.createdAt),
-    createdBy: data.createdBy
-      ? {
-          uid: String(data.createdBy.uid ?? ""),
-          email: (data.createdBy.email ?? null) as string | null,
-        }
-      : undefined,
+    createdBy,
     updatedAt: data.updatedAt ? tsToIso(data.updatedAt) : undefined,
   } as MemoryItem;
 }
@@ -153,7 +160,7 @@ export async function writeMemoryItem(params: {
   const { orgId, projectId, uid, email, kind } = params;
   await requireOrgRole(uid, orgId, { minRole: "member" });
 
-  const payloadSchema = (MemoryPayloadSchemaByKind as any)[kind] as z.ZodTypeAny;
+  const payloadSchema = MemoryPayloadSchemaByKind[kind];
   const parsedPayload = payloadSchema.parse(params.payload);
 
   const ref = await memoryCol(orgId, projectId).add({
@@ -186,7 +193,8 @@ export async function updateTaskItem(params: {
     (err as { status?: number }).status = 404;
     throw err;
   }
-  if ((snap.data() as any)?.kind !== "task") {
+  const snapData = (snap.data() ?? {}) as Record<string, unknown>;
+  if (snapData.kind !== "task") {
     const err = new Error("Can only update kind=task.");
     (err as { status?: number }).status = 400;
     throw err;

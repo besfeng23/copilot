@@ -12,8 +12,8 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
-  const decoded = await requireAuth(req).catch((err: any) => {
-    const status = typeof err?.status === "number" ? err.status : 401;
+  const decoded = await requireAuth(req).catch((err: unknown) => {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 401;
     return NextResponse.json(
       { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
       { status }
@@ -41,10 +41,14 @@ export async function GET(req: Request) {
       minRole: "viewer",
     });
     return NextResponse.json({ ok: true, truthPack });
-  } catch (err: any) {
-    const status = typeof err?.status === "number" ? err.status : 400;
+  } catch (err: unknown) {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 400;
     return NextResponse.json(
-      { ok: false, code: "READ_FAILED", message: err?.message ?? "Read failed." },
+      {
+        ok: false,
+        code: "READ_FAILED",
+        message: err instanceof Error ? err.message : "Read failed.",
+      },
       { status }
     );
   }

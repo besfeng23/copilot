@@ -38,11 +38,11 @@ export async function GET(req: Request) {
         });
 
       const projects = projectsSnap.docs.map((d) => {
-        const data = d.data() as any;
+        const data = d.data() as Record<string, unknown>;
         return {
           id: d.id,
-          name: (data.name as string | undefined) ?? d.id,
-          goal: (data.goal as string | undefined) ?? null,
+          name: typeof data.name === "string" ? data.name : d.id,
+          goal: typeof data.goal === "string" ? data.goal : null,
         };
       });
 

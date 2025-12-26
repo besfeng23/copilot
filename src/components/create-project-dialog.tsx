@@ -26,7 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import type { Project } from "@/app/(protected)/projects/page";
+import type { Project } from "@/lib/types";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Project name must be at least 2 characters.").max(50),
@@ -74,7 +74,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         });
         setOpen(false);
         form.reset();
-    } catch (error) {
+    } catch {
         toast({
             title: "Error",
             description: "Failed to create the project. Please try again.",

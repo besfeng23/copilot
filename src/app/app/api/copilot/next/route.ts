@@ -17,7 +17,8 @@ type NextAction = {
   rationale: string;
   requiredWrites: Array<{
     kind: "decision" | "constraint" | "summary" | "audit" | "artifact" | "task";
-    payload: unknown;
+    // Keep this optional to accommodate model output variance.
+    payload?: unknown;
   }>;
 };
 
@@ -118,8 +119,8 @@ async function tryOpenAI(truthPack: TruthPack): Promise<NextAction | null> {
 }
 
 export async function POST(req: Request) {
-  const decoded = await requireAuth(req).catch((err: any) => {
-    const status = typeof err?.status === "number" ? err.status : 401;
+  const decoded = await requireAuth(req).catch((err: unknown) => {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 401;
     return NextResponse.json(
       { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
       { status }
@@ -146,10 +147,14 @@ export async function POST(req: Request) {
     const nextAction = ai ?? deterministicFallback(truthPack);
 
     return NextResponse.json({ ok: true, nextAction });
-  } catch (err: any) {
-    const status = typeof err?.status === "number" ? err.status : 400;
+  } catch (err: unknown) {
+    const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : 400;
     return NextResponse.json(
-      { ok: false, code: "COPILOT_FAILED", message: err?.message ?? "Copilot failed." },
+      {
+        ok: false,
+        code: "COPILOT_FAILED",
+        message: err instanceof Error ? err.message : "Copilot failed.",
+      },
       { status }
     );
   }
