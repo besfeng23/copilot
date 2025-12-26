@@ -7,16 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-
-async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = (json?.message as string | undefined) ?? `Request failed (${res.status})`;
-    throw new Error(msg);
-  }
-  return json as T;
-}
+import { fetchJson } from "@/lib/api/client";
 
 function SectionList(props: { sections: Array<{ title: string; bullets: string[] }> }) {
   return (
