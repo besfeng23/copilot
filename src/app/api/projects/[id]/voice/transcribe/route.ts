@@ -10,7 +10,7 @@ const BodySchema = z.object({
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { requireAuth } = await import('@/lib/auth/server');
   const { getArtifact, createTranscriptArtifact } = await import('@/lib/projects/server');
-  const { getAdminStorage } = await import('@/lib/firebase/admin');
+  const { getAdminStorage, isFirebaseAdminConfigError } = await import('@/lib/firebase/admin');
   const { transcribeAudio } = await import('@/lib/openai/transcribe');
 
   const decoded = await requireAuth(req).catch((err: any) => {
@@ -67,6 +67,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     return NextResponse.json({ ok: true, transcriptArtifactId: out.artifactId, text });
   } catch (err: any) {
+    if (isFirebaseAdminConfigError(err)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'Missing Firebase Admin env vars',
+          details: { missing: err.missing, present: err.details },
+        },
+        { status: 500 }
+      );
+    }
     const status = typeof err?.status === 'number' ? err.status : 400;
     return NextResponse.json(
       { ok: false, code: 'VOICE_TRANSCRIBE_FAILED', message: err?.message ?? 'Transcription failed.' },
