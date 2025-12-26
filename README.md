@@ -139,6 +139,7 @@ Data lives under:
 ### Firebase security rules examples
 
 See `firestore.rules.example` (or `docs/firebase/firestore.rules.example`) for an **admin-only** rules baseline for the Memories module.
+See `docs/firebase/firestore.rules.example` (or `firestore.rules.example`) for an **admin-only** rules baseline for the Memories module.
 
 ### Example plan JSON output (strict)
 
