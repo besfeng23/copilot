@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { DecodedIdToken } from 'firebase-admin/auth';
 
-import { adminAuth } from '@/lib/firebase/admin';
+import { getAdminAuth } from '@/lib/firebase/admin';
 
 export type VerifyIdTokenErrorCode = 'NO_AUTH' | 'BAD_TOKEN';
 
@@ -35,7 +35,7 @@ export async function verifyIdTokenFromAuthHeader(req: Request): Promise<Decoded
   }
 
   try {
-    return await adminAuth.verifyIdToken(token);
+    return await getAdminAuth().verifyIdToken(token);
   } catch (err) {
     throw new VerifyIdTokenError('BAD_TOKEN', 'Invalid or expired ID token.', err);
   }

@@ -1,15 +1,64 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
-/**
- * Firebase auth is client-side (`onAuthStateChanged`) in this app.
- *
- * Middleware runs on the Edge and must not invent server auth state (e.g. fake cookies).
- * Route protection is enforced by the client gate in `src/app/(protected)/layout.tsx`.
- *
- * This file exists only to explicitly keep public routes public and avoid any
- * cookie-based redirect logic that could create login redirect loops.
- */
-export function middleware(_req: NextRequest) {
+const ID_TOKEN_COOKIE_NAME = "pp_id_token";
+const GOOGLE_JWKS_URL = new URL(
+  "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+);
+const jwks = createRemoteJWKSet(GOOGLE_JWKS_URL);
+
+function isPublicPath(pathname: string) {
+  if (pathname === "/login") return true;
+  // Needed so unauthenticated users can establish/clear the session cookie.
+  if (pathname === "/app/api/auth/session") return true;
+  if (pathname === "/app/api/auth/logout") return true;
+  return false;
+}
+
+async function isAuthed(req: NextRequest): Promise<boolean> {
+  const token = req.cookies.get(ID_TOKEN_COOKIE_NAME)?.value;
+  if (!token) return false;
+
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  if (!projectId) return false;
+
+  try {
+    await jwtVerify(token, jwks, {
+      audience: projectId,
+      issuer: `https://securetoken.google.com/${projectId}`,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  const authed = await isAuthed(req);
+
+  if (pathname === "/login") {
+    if (authed) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/app";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (!authed) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 

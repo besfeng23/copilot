@@ -2,42 +2,54 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-function getBearerToken(req: Request): string | null {
-  const header = req.headers.get("authorization") ?? req.headers.get("Authorization");
-  if (!header) return null;
-  const match = header.match(/^Bearer\s+(.+)$/i);
-  const token = match?.[1]?.trim();
-  return token ? token : null;
-}
-
 export async function GET(req: Request) {
-  const token = getBearerToken(req);
-  if (!token) {
+  const { requireAuth, getUserOrgRoles, ensurePersonalBootstrap } = await import(
+    "@/lib/auth/server"
+  );
+  const { getAdminDb } = await import("@/lib/firebase/admin");
+  const adminDb = getAdminDb();
+
+  const decoded = await requireAuth(req).catch(() => null);
+  if (!decoded) {
     return NextResponse.json(
-      { ok: false, code: "NO_AUTH", message: "Missing Authorization: Bearer <token>." },
+      { ok: false, code: "UNAUTHENTICATED", message: "Not authenticated." },
       { status: 401 }
     );
   }
 
-  // If the server isn't configured for Firebase Admin (common in local/dev),
-  // treat authenticated calls as "not authorized" instead of crashing/500ing.
-  if (!process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON) {
-    return NextResponse.json(
-      { ok: false, code: "NOT_A_MEMBER", message: "User is not a member of this workspace." },
-      { status: 403 }
-    );
-  }
+  // Ensure there is at least one org/project (personal bootstrap) so the dashboard can function.
+  await ensurePersonalBootstrap({ uid: decoded.uid, email: decoded.email ?? null });
 
-  try {
-    const { verifyIdTokenFromAuthHeader } = await import("@/lib/auth/verifyIdToken");
-    await verifyIdTokenFromAuthHeader(req);
-  } catch {
-    return NextResponse.json(
-      { ok: false, code: "BAD_TOKEN", message: "Invalid or expired ID token." },
-      { status: 401 }
-    );
-  }
+  const orgRoles = await getUserOrgRoles(decoded.uid);
 
-  return NextResponse.json({ ok: true, projects: [] });
+  const orgs = await Promise.all(
+    orgRoles.map(async ({ orgId, role }) => {
+      const orgSnap = await adminDb.doc(`orgs/${orgId}`).get();
+      const orgName = (orgSnap.data()?.name as string | undefined) ?? orgId;
+
+      const projectsSnap = await adminDb
+        .collection(`orgs/${orgId}/projects`)
+        .orderBy("createdAt", "desc")
+        .limit(50)
+        .get()
+        .catch(async () => {
+          // If createdAt is missing for older docs, fall back to unordered listing.
+          return await adminDb.collection(`orgs/${orgId}/projects`).limit(50).get();
+        });
+
+      const projects = projectsSnap.docs.map((d) => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          name: (data.name as string | undefined) ?? d.id,
+          goal: (data.goal as string | undefined) ?? null,
+        };
+      });
+
+      return { id: orgId, name: orgName, role, projects };
+    })
+  );
+
+  return NextResponse.json({ ok: true, orgs });
 }
 
