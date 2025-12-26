@@ -17,7 +17,7 @@ type NextAction = {
   rationale: string;
   requiredWrites: Array<{
     kind: "decision" | "constraint" | "summary" | "audit" | "artifact" | "task";
-    payload: unknown;
+    payload?: unknown;
   }>;
 };
 
