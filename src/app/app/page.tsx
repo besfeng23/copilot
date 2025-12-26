@@ -21,9 +21,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { fetchJson } from "@/lib/api/client";
+import type { ApiError } from "@/lib/api/errors";
 
 type OrgProject = { id: string; name: string; goal: string | null };
 type Org = { id: string; name: string; role: string; projects: OrgProject[] };
+
+type ProjectsIndexResponse =
+  | { ok: true; orgs: Org[]; projects: Array<OrgProject & { orgId: string }>; reason?: "NO_ORG" }
+  | { ok: false; code: string; message: string };
 
 type TruthPack = {
   orgId: string;
@@ -53,6 +58,8 @@ export default function CopilotDashboardPage() {
   const [orgs, setOrgs] = useState<Org[] | null>(null);
   const [orgId, setOrgId] = useState<string>("");
   const [projectId, setProjectId] = useState<string>("");
+  const [projectsReason, setProjectsReason] = useState<"NO_ORG" | null>(null);
+  const [bootstrapping, setBootstrapping] = useState(false);
 
   const [truthPack, setTruthPack] = useState<TruthPack | null>(null);
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
@@ -71,27 +78,59 @@ export default function CopilotDashboardPage() {
     [selectedOrg, projectId]
   );
 
+  async function loadProjectsIndex() {
+    const data = await fetchJson<ProjectsIndexResponse>("/api/projects", { cache: "no-store" });
+    if (!data.ok) {
+      // Note: fetchJson only returns non-2xx here, but keep this defensive.
+      throw new Error(data.message);
+    }
+    setOrgs(data.orgs);
+    setProjectsReason(data.reason ?? null);
+
+    const fallbackOrg = data.orgs[0]?.id ?? "";
+    const fallbackProject = data.orgs[0]?.projects[0]?.id ?? "";
+    setOrgId((prev) => prev || fallbackOrg);
+    setProjectId((prev) => prev || fallbackProject);
+  }
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) return;
 
     (async () => {
       try {
-        const data = await fetchJson<{ ok: true; orgs: Org[] }>("/api/projects", {
-          cache: "no-store",
-        });
-        setOrgs(data.orgs);
-
-        const fallbackOrg = data.orgs[0]?.id ?? "";
-        const fallbackProject = data.orgs[0]?.projects[0]?.id ?? "";
-        setOrgId((prev) => prev || fallbackOrg);
-        setProjectId((prev) => prev || fallbackProject);
+        await loadProjectsIndex();
       } catch (err: any) {
-        toast({ title: "Failed to load projects", description: err.message, variant: "destructive" });
+        const code = (err as ApiError | undefined)?.code;
+        const message = err?.message ?? "Failed to load projects.";
+        toast({
+          title: "Failed to load projects",
+          description: code ? `${message} (${code})` : message,
+          variant: "destructive",
+        });
         setOrgs([]);
       }
     })();
   }, [authLoading, user, toast]);
+
+  async function bootstrapWorkspace() {
+    setBootstrapping(true);
+    try {
+      await fetchJson("/api/admin/bootstrap", { method: "POST" });
+      // Refetch orgs/projects and auto-select fallbacks.
+      await loadProjectsIndex();
+    } catch (err: any) {
+      const code = (err as ApiError | undefined)?.code;
+      const message = err?.message ?? "Bootstrap failed.";
+      toast({
+        title: "Bootstrap failed",
+        description: code ? `${message} (${code})` : message,
+        variant: "destructive",
+      });
+    } finally {
+      setBootstrapping(false);
+    }
+  }
 
   async function refreshAll(targetOrgId?: string, targetProjectId?: string) {
     const o = targetOrgId ?? orgId;
@@ -149,6 +188,22 @@ export default function CopilotDashboardPage() {
       <div className="p-6">
         <Skeleton className="h-8 w-64" />
       </div>
+    );
+  }
+
+  if (orgs !== null && orgs.length === 0 && projectsReason === "NO_ORG") {
+    return (
+      <main className="min-h-screen bg-background p-4 md:p-6">
+        <div className="mx-auto max-w-xl">
+          <h1 className="mb-2 text-2xl font-semibold">Copilot Dashboard</h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            You don’t have a workspace yet. Create one to start using projects.
+          </p>
+          <Button className="w-full" disabled={bootstrapping} onClick={bootstrapWorkspace}>
+            Create workspace
+          </Button>
+        </div>
+      </main>
     );
   }
 
