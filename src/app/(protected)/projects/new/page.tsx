@@ -9,19 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { fetchJson } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth";
 
 type IntakeMsg = { role: "user" | "assistant"; text: string; localId: string };
-
-async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = (json?.message as string | undefined) ?? `Request failed (${res.status})`;
-    throw new Error(msg);
-  }
-  return json as T;
-}
 
 function uid() {
   return globalThis.crypto?.randomUUID?.() ?? String(Date.now());
