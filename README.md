@@ -46,7 +46,14 @@
 
 ### Environment variables
 
-**Client (safe to expose)**
+## Vercel Setup
+
+If the deployed app is white-screening, start with the self-check:
+
+- **Page**: `/env-check`
+- **Endpoint**: `/api/health/env` (returns missing key names only; no values)
+
+### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
@@ -55,12 +62,23 @@
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 
-**Server-only**
+### Server-only
 
-- Firebase Admin:
+#### Firebase Admin (set **ONE** supported format)
+
+- **Preferred (JSON string)**:
+  - `FIREBASE_SERVICE_ACCOUNT_JSON`
+- **Split vars (either prefix works)**:
   - `FIREBASE_ADMIN_PROJECT_ID`
   - `FIREBASE_ADMIN_CLIENT_EMAIL`
-  - `FIREBASE_ADMIN_PRIVATE_KEY` (single line, with `\n` escapes)
+  - `FIREBASE_ADMIN_PRIVATE_KEY`
+  - `FIREBASE_SERVICE_ACCOUNT_PROJECT_ID`
+  - `FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL`
+  - `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`
+
+Private key note: store as a single line with `\n` escapes; the server will normalize to real newlines.
+
+- Firebase Admin:
   - `FIREBASE_STORAGE_BUCKET` (recommended; Storage bucket name, e.g. `myproj.appspot.com`)
 - OpenAI:
   - `OPENAI_API_KEY`

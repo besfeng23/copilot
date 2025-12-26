@@ -1,2 +1,9 @@
 // Backwards-compatible exports for existing imports.
-export { getFirebaseApp, getFirebaseAuth } from "@/lib/firebase/client";
+export {
+  FIREBASE_CLIENT_ENV_KEYS,
+  MISSING_FIREBASE_CLIENT_ENV,
+  getMissingFirebaseClientEnv,
+  isFirebaseClientConfigured,
+  getFirebaseApp,
+  getFirebaseAuth,
+} from "@/lib/firebase/client";

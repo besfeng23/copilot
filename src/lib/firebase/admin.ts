@@ -6,52 +6,151 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import type { ServiceAccount } from 'firebase-admin';
 
-function readServiceAccountFromEnv(): ServiceAccount {
-  // Preferred: explicit, Vercel-friendly env vars.
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKeyRaw = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+export class FirebaseAdminError extends Error {
+  code = 'FIREBASE_ADMIN_NOT_CONFIGURED' as const;
+  missing: string[];
 
-  if (projectId && clientEmail && privateKeyRaw) {
-    return {
-      projectId,
-      clientEmail,
-      privateKey: privateKeyRaw.replace(/\\n/g, '\n'),
-    };
+  constructor(message: string, missing: string[]) {
+    super(message);
+    this.name = 'FirebaseAdminError';
+    this.missing = missing;
+  }
+}
+
+const ADMIN_JSON_ENV_CANDIDATES = [
+  'FIREBASE_SERVICE_ACCOUNT_JSON',
+  // Back-compat name (seen in older setups / existing code).
+  'FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON',
+] as const;
+
+const ADMIN_SPLIT_ENV_GROUPS = [
+  {
+    projectId: 'FIREBASE_ADMIN_PROJECT_ID',
+    clientEmail: 'FIREBASE_ADMIN_CLIENT_EMAIL',
+    privateKey: 'FIREBASE_ADMIN_PRIVATE_KEY',
+  },
+  {
+    projectId: 'FIREBASE_SERVICE_ACCOUNT_PROJECT_ID',
+    clientEmail: 'FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL',
+    privateKey: 'FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY',
+  },
+] as const;
+
+function normalizePrivateKey(value: string) {
+  return value.replace(/\\n/g, '\n');
+}
+
+function readServiceAccountFromEnv(): ServiceAccount {
+  // Preferred: full JSON string (most portable to Vercel).
+  for (const envName of ADMIN_JSON_ENV_CANDIDATES) {
+    const raw = process.env[envName];
+    if (!raw || !raw.trim()) continue;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Never include the raw value.
+      throw new FirebaseAdminError(`${envName} is not valid JSON.`, [envName]);
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      throw new FirebaseAdminError(`${envName} must parse to a JSON object.`, [envName]);
+    }
+
+    const sa = parsed as Record<string, unknown>;
+    if (typeof sa.private_key === 'string') {
+      sa.private_key = normalizePrivateKey(sa.private_key);
+    }
+
+    const required = ['project_id', 'client_email', 'private_key'] as const;
+    const missingFields = required.filter(
+      (k) => typeof sa[k] !== 'string' || !(sa[k] as string).trim()
+    );
+    if (missingFields.length) {
+      // Missing *fields* inside JSON; the actionable fix is still "set/replace this env var".
+      throw new FirebaseAdminError(
+        `${envName} is missing required service account fields.`,
+        [envName]
+      );
+    }
+
+    return sa as unknown as ServiceAccount;
   }
 
-  // Back-compat: a full JSON service account string (older config).
-  const raw = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON;
-  if (!raw) {
-    throw new Error(
-      'Missing Firebase Admin env vars. Set FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY.'
+  // Fallback: split env vars.
+  for (const group of ADMIN_SPLIT_ENV_GROUPS) {
+    const projectId = process.env[group.projectId];
+    const clientEmail = process.env[group.clientEmail];
+    const privateKeyRaw = process.env[group.privateKey];
+
+    if (projectId && clientEmail && privateKeyRaw) {
+      return {
+        // Use JSON-style keys; Firebase Admin accepts the service-account JSON shape.
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: normalizePrivateKey(privateKeyRaw),
+      } as unknown as ServiceAccount;
+    }
+  }
+
+  // If partially configured, report missing keys for the most "active" group.
+  const groupScores = ADMIN_SPLIT_ENV_GROUPS.map((g) => {
+    const present =
+      (process.env[g.projectId] ? 1 : 0) +
+      (process.env[g.clientEmail] ? 1 : 0) +
+      (process.env[g.privateKey] ? 1 : 0);
+    return { g, present };
+  });
+
+  const best = groupScores.sort((a, b) => b.present - a.present)[0];
+  if (best && best.present > 0) {
+    const missing = [best.g.projectId, best.g.clientEmail, best.g.privateKey].filter(
+      (k) => !process.env[k] || !String(process.env[k]).trim()
+    );
+    throw new FirebaseAdminError(
+      'Firebase Admin is not fully configured (missing required environment variables).',
+      missing
     );
   }
 
-  let parsed: unknown;
+  // Nothing set: list all supported options (names only).
+  throw new FirebaseAdminError(
+    'Firebase Admin is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON or split service account variables.',
+    [
+      'FIREBASE_SERVICE_ACCOUNT_JSON',
+      'FIREBASE_ADMIN_PROJECT_ID',
+      'FIREBASE_ADMIN_CLIENT_EMAIL',
+      'FIREBASE_ADMIN_PRIVATE_KEY',
+      'FIREBASE_SERVICE_ACCOUNT_PROJECT_ID',
+      'FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL',
+      'FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY',
+    ]
+  );
+}
+
+export function getFirebaseAdminEnvStatus(): { ok: boolean; missing: string[] } {
   try {
-    parsed = JSON.parse(raw);
+    readServiceAccountFromEnv();
+    return { ok: true, missing: [] };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON is not valid JSON. JSON.parse failed: ${msg}`);
+    if (err instanceof FirebaseAdminError) {
+      return { ok: false, missing: err.missing };
+    }
+    // Avoid leaking unexpected errors; return a generic "not ok" with the most actionable missing set.
+    return {
+      ok: false,
+      missing: [
+        'FIREBASE_SERVICE_ACCOUNT_JSON',
+        'FIREBASE_ADMIN_PROJECT_ID',
+        'FIREBASE_ADMIN_CLIENT_EMAIL',
+        'FIREBASE_ADMIN_PRIVATE_KEY',
+        'FIREBASE_SERVICE_ACCOUNT_PROJECT_ID',
+        'FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL',
+        'FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY',
+      ],
+    };
   }
-
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON must parse to a JSON object.');
-  }
-
-  const sa = parsed as Record<string, unknown>;
-  if (typeof sa.private_key === 'string') {
-    sa.private_key = sa.private_key.replace(/\\n/g, '\n');
-  }
-
-  const required = ['project_id', 'client_email', 'private_key'] as const;
-  const missing = required.filter((k) => typeof sa[k] !== 'string' || !(sa[k] as string).trim());
-  if (missing.length) {
-    throw new Error(`FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON missing required field(s): ${missing.join(', ')}`);
-  }
-
-  return sa as unknown as ServiceAccount;
 }
 
 let cachedAdminApp: ReturnType<typeof getApp> | null = null;
