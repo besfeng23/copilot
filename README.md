@@ -58,14 +58,23 @@
 **Server-only**
 
 - Firebase Admin:
-  - `FIREBASE_ADMIN_PROJECT_ID`
-  - `FIREBASE_ADMIN_CLIENT_EMAIL`
-  - `FIREBASE_ADMIN_PRIVATE_KEY` (single line, with `\n` escapes)
+  - Preferred: `FIREBASE_SERVICE_ACCOUNT_JSON` (the full service account JSON, as a single env var)
+  - Alternative: split env vars
+    - `FIREBASE_ADMIN_PROJECT_ID`
+    - `FIREBASE_ADMIN_CLIENT_EMAIL`
+    - `FIREBASE_ADMIN_PRIVATE_KEY` (single line, with `\n` escapes)
+  - Legacy/back-compat: `FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON` (same shape as the service account JSON)
   - `FIREBASE_STORAGE_BUCKET` (recommended; Storage bucket name, e.g. `myproj.appspot.com`)
 - OpenAI:
   - `OPENAI_API_KEY`
   - `OPENAI_PLAN_MODEL` (optional, default: `gpt-4.1-mini`)
   - `OPENAI_TRANSCRIBE_MODEL` (optional, default: `whisper-1`)
+
+### Vercel env setup notes
+
+- Add server-only env vars under **Project → Settings → Environment Variables**.
+- For `FIREBASE_SERVICE_ACCOUNT_JSON`: paste the full JSON service account object.
+- For `FIREBASE_ADMIN_PRIVATE_KEY`: paste it as a single line with literal `\n` sequences (the app normalizes `\\n` → newlines at runtime).
 
 ### Example plan JSON output (strict)
 

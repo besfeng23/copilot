@@ -77,17 +77,25 @@ export default function CopilotDashboardPage() {
 
     (async () => {
       try {
-        const data = await fetchJson<{ ok: true; orgs: Org[] }>("/api/projects", {
+        const data = await fetchJson<any>("/api/projects", {
           cache: "no-store",
         });
-        setOrgs(data.orgs);
+        const nextOrgs: Org[] | null = Array.isArray(data?.orgs) ? (data.orgs as Org[]) : null;
+        if (!nextOrgs) {
+          throw new Error("Unexpected response from /api/projects");
+        }
+        setOrgs(nextOrgs);
 
-        const fallbackOrg = data.orgs[0]?.id ?? "";
-        const fallbackProject = data.orgs[0]?.projects[0]?.id ?? "";
+        const fallbackOrg = nextOrgs[0]?.id ?? "";
+        const fallbackProject = nextOrgs[0]?.projects?.[0]?.id ?? "";
         setOrgId((prev) => prev || fallbackOrg);
         setProjectId((prev) => prev || fallbackProject);
       } catch (err: any) {
-        toast({ title: "Failed to load projects", description: err.message, variant: "destructive" });
+        toast({
+          title: "Failed to load projects",
+          description: (err?.message as string | undefined) ?? "Request failed.",
+          variant: "destructive",
+        });
         setOrgs([]);
       }
     })();
@@ -181,6 +189,15 @@ export default function CopilotDashboardPage() {
             <CardContent className="space-y-3">
               {orgs === null ? (
                 <Skeleton className="h-10 w-full" />
+              ) : orgs.length === 0 ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-muted-foreground">
+                    No projects available yet (or the API is temporarily unavailable).
+                  </div>
+                  <Button variant="secondary" className="w-full" onClick={() => router.push("/projects/new")}>
+                    Create a Project
+                  </Button>
+                </div>
               ) : (
                 <>
                   <div className="space-y-2">
