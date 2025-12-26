@@ -13,7 +13,6 @@ function isPublicPath(pathname: string) {
   if (pathname === "/signup") return true;
   if (pathname === "/env-check") return true;
   if (pathname === "/config") return true;
-  if (pathname === "/config") return true;
 
   // Public API / health checks
   if (pathname === "/api/health") return true;

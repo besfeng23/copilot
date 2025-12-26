@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 
+import { listMissingPublicEnv } from "@/lib/env/public";
+
 export const MISSING_FIREBASE_CLIENT_ENV = "MISSING_FIREBASE_CLIENT_ENV" as const;
 
 export const REQUIRED_FIREBASE_CLIENT_ENV_KEYS = [
@@ -20,10 +22,7 @@ function readClientEnv(key: RequiredClientEnvKey) {
 }
 
 export function getMissingFirebaseClientEnvKeys(): RequiredClientEnvKey[] {
-  return REQUIRED_FIREBASE_CLIENT_ENV_KEYS.filter((k) => {
-    const v = readClientEnv(k);
-    return typeof v !== "string" || v.trim().length === 0;
-  });
+  return listMissingPublicEnv() as RequiredClientEnvKey[];
 }
 
 export function isFirebaseClientConfigured(): boolean {
