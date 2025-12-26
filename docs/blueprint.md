@@ -1,3 +1,18 @@
+# COPILOT DASHBOARD — LOCKED SYSTEM OVERVIEW
+
+Copilot is a **dashboard**: a cockpit for execution that acts like a **brain + nervous system + hands** for shipping.
+
+- **Cockpit/brain**: a single place to see state, decisions, and the “one best next action”.
+- **Nervous system**: captures signals (intake, voice, notes) and routes them into structured artifacts.
+- **Hands**: generates plans/prompts and drives the next concrete step, without pretending to be a full autonomous agent.
+- **Memory**: explicit, org-scoped memory objects (and optional embeddings) used to support recall/search; it is not “ambient”.
+- **Datasets + evals**: designed to support repeatable inputs/outputs and future evaluation of quality.
+
+What this is NOT:
+- Not a generic chat UI.
+- Not a hidden “always-on” agent.
+- Not a secret store (never store secrets in docs/env; only names).
+
 # **App Name**: Copilot Projects
 
 ## Core Features:

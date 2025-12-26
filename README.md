@@ -1,5 +1,19 @@
 # Copilot
 
+## What this is / what this is not
+
+Copilot is a **dashboard** (a cockpit) for shipping: a **brain + nervous system + hands** for execution.
+
+- **Brain/cockpit**: one place to see state, decisions, and the “one best next action”.
+- **Nervous system**: captures signals (intake, voice, notes) into structured artifacts.
+- **Hands**: generates plans/prompts and drives the next concrete step.
+- **Explicit memory**: org-scoped memory objects; optional embeddings are feature-gated.
+
+What this is NOT:
+- Not a generic chatbot.
+- Not a hidden “always-on” agent.
+- Not a secrets store (only env **names** are documented).
+
 ## Usable dashboard flow (bootstrap + intake + plan + voice)
 
 ### Web routes
@@ -61,6 +75,10 @@ There is a template at `.env.example` (and also `docs/env.local.example`). Copy 
 
 Node version: this repo targets **Node.js 20.x** (see `package.json#engines` and `.nvmrc`).
 
+### Local dev quickstart (degraded mode ok)
+
+This app should **start and build without secrets**. First validation step: visit **`/config`**.
+
 ### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -83,10 +101,30 @@ Node version: this repo targets **Node.js 20.x** (see `package.json#engines` and
 **Private key newline note:** When storing a private key in split env vars, keep it as a single line and use literal `\n` escapes. The server will normalize `\\n` to real newlines at runtime.
 
 - OpenAI:
-  - `OPENAI_API_KEY`
+  - `OPENAI_API_KEY` (optional; only required for OpenAI-backed features)
   - `OPENAI_PLAN_MODEL` (optional, default: `gpt-4.1-mini`)
   - `OPENAI_TRANSCRIBE_MODEL` (optional, default: `whisper-1`)
   - `OPENAI_EMBEDDING_MODEL` (optional, default: `text-embedding-3-small`)
+
+### Cursor Agent Online checklist (names only)
+
+- Client:
+  - `NEXT_PUBLIC_FIREBASE_API_KEY`
+  - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+  - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+  - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+  - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+  - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- Server/Admin (accepted formats):
+  - `FIREBASE_SERVICE_ACCOUNT_JSON`
+  - `FIREBASE_ADMIN_PROJECT_ID`
+  - `FIREBASE_ADMIN_CLIENT_EMAIL`
+  - `FIREBASE_ADMIN_PRIVATE_KEY`
+  - `FIREBASE_SERVICE_ACCOUNT_PROJECT_ID`
+  - `FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL`
+  - `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`
+- Optional:
+  - `OPENAI_API_KEY`
 
 ### Admin: Memories Console
 
@@ -101,7 +139,7 @@ Data lives under:
 
 ### Firebase security rules examples
 
-See `docs/firebase/firestore.rules.example` for an **admin-only** rules baseline for the Memories module.
+See `firestore.rules.example` (or `docs/firebase/firestore.rules.example`) for an **admin-only** rules baseline for the Memories module.
 
 ### Example plan JSON output (strict)
 

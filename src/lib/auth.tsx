@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   if (missingClientEnv.length) {
     // Allow the self-diagnostic page to render even if Firebase client env is missing.
-    if (pathname === "/env-check") {
+    if (pathname === "/env-check" || pathname === "/config") {
       return (
         <AuthContext.Provider value={{ user: null, loading: false }}>
           {children}
@@ -71,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           <h1 className="text-xl font-semibold">Application Error</h1>
           <p className="text-sm text-muted-foreground">
             Firebase client configuration is missing. Set these exact keys in Vercel Project → Settings → Environment Variables, then redeploy.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            For a full config preflight (names only), visit <a className="underline" href="/config">/config</a>.
           </p>
           <div className="rounded-md border p-4">
             <div className="text-sm font-medium mb-2">Missing client env vars</div>
