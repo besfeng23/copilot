@@ -46,7 +46,16 @@
 
 ### Environment variables
 
-**Client (safe to expose)**
+## Vercel Setup
+
+Set these in **Vercel Project → Settings → Environment Variables**, then redeploy.
+
+You can self-diagnose missing keys via:
+
+- `GET /api/health/env` (JSON, names only)
+- `/env-check` (UI, names only)
+
+### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
@@ -55,13 +64,18 @@
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 
-**Server-only**
+### Server-only (never expose to client)
 
-- Firebase Admin:
-  - `FIREBASE_ADMIN_PROJECT_ID`
-  - `FIREBASE_ADMIN_CLIENT_EMAIL`
-  - `FIREBASE_ADMIN_PRIVATE_KEY` (single line, with `\n` escapes)
+- Firebase Admin (preferred):
+  - `FIREBASE_SERVICE_ACCOUNT_JSON` (full service account JSON string)
+- Firebase Admin (split vars; accepted compatibility variants):
+  - `FIREBASE_ADMIN_PROJECT_ID` or `FIREBASE_SERVICE_ACCOUNT_PROJECT_ID`
+  - `FIREBASE_ADMIN_CLIENT_EMAIL` or `FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL`
+  - `FIREBASE_ADMIN_PRIVATE_KEY` or `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`
   - `FIREBASE_STORAGE_BUCKET` (recommended; Storage bucket name, e.g. `myproj.appspot.com`)
+
+**Private key newline note:** When storing a private key in split env vars, keep it as a single line and use literal `\n` escapes. The server will normalize `\\n` to real newlines at runtime.
+
 - OpenAI:
   - `OPENAI_API_KEY`
   - `OPENAI_PLAN_MODEL` (optional, default: `gpt-4.1-mini`)

@@ -139,7 +139,10 @@ export default function CopilotDashboardPage() {
   }
 
   async function handleLogout() {
-    await signOut(getFirebaseAuth()).catch(() => {});
+    const auth = getFirebaseAuth();
+    if (auth) {
+      await signOut(auth).catch(() => {});
+    }
     await fetch("/app/api/auth/logout", { method: "POST" }).catch(() => {});
     router.replace("/login");
   }
