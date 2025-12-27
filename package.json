@@ -10,7 +10,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck"
+    "test": "npm run typecheck",
+    "memory:build": "npm --prefix packages/memory-etl run build",
+    "memory:ingest": "npm run memory:build --silent && node packages/memory-etl/dist/cli.js ingest",
+    "memory:verify": "npm run memory:build --silent && node packages/memory-etl/dist/cli.js verify"
   },
   "engines": {
     "node": ">=20 <21"

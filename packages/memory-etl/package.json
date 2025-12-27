@@ -1,0 +1,41 @@
+{
+  "name": "@memory-vault/memory-etl",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Memory Vault v1 ETL + embedding CLI for portable Memory Packs",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "memory-etl": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "ingest": "tsx src/cli.ts ingest",
+    "embed": "tsx src/cli.ts embed",
+    "sync": "tsx src/cli.ts sync",
+    "verify": "tsx src/cli.ts verify",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "stream-chain": "^3.4.0",
+    "stream-json": "^1.9.1",
+    "yargs": "^18.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.19.0",
+    "@types/yargs": "^17.0.33",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}
+
+

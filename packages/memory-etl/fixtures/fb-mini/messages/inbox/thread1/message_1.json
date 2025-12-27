@@ -1,0 +1,18 @@
+{
+  "title": "Thread 1",
+  "participants": [{ "name": "Alice" }, { "name": "Bob" }],
+  "messages": [
+    {
+      "sender_name": "Alice",
+      "timestamp_ms": 1700000000000,
+      "content": "Hello Bob, UNICORN token for search."
+    },
+    {
+      "sender_name": "Bob",
+      "timestamp_ms": 1700000005000,
+      "content": "Hi Alice!"
+    }
+  ]
+}
+
+
