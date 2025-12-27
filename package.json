@@ -13,7 +13,13 @@
     "test": "npm run typecheck",
     "memory:build": "npm --prefix packages/memory-etl run build",
     "memory:ingest": "npm run memory:build --silent && node packages/memory-etl/dist/cli.js ingest",
-    "memory:verify": "npm run memory:build --silent && node packages/memory-etl/dist/cli.js verify"
+    "memory:verify": "npm run memory:build --silent && node packages/memory-etl/dist/cli.js verify",
+    "mcp:openai": "node tools/mcp/openai.mjs --help",
+    "mcp:github": "node tools/mcp/github.mjs --help",
+    "mcp:gcp": "node tools/mcp/gcp.mjs --help",
+    "mcp:firebase": "node tools/mcp/firebase.mjs --help",
+    "mcp:vercel": "node tools/mcp/vercel.mjs --help",
+    "mcp:linear": "node tools/mcp/linear.mjs --help"
   },
   "engines": {
     "node": ">=20 <21"
@@ -48,6 +54,9 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
+    "@modelcontextprotocol/sdk": "1.25.1",
+    "@octokit/rest": "22.0.1",
+    "google-auth-library": "10.5.0",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.6.0",
     "genkit": "^1.20.0",

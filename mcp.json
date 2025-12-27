@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "openai": { "command": "node", "args": ["tools/mcp/openai.mjs"] },
+    "github": { "command": "node", "args": ["tools/mcp/github.mjs"] },
+    "gcp": { "command": "node", "args": ["tools/mcp/gcp.mjs"] },
+    "firebase": { "command": "node", "args": ["tools/mcp/firebase.mjs"] },
+    "vercel": { "command": "node", "args": ["tools/mcp/vercel.mjs"] },
+    "linear": { "command": "node", "args": ["tools/mcp/linear.mjs"] }
+  }
+}
+
+
