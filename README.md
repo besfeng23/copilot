@@ -78,7 +78,6 @@ Node version: this repo targets **Node.js 20.x** (see `package.json#engines` and
 ### Local dev quickstart (degraded mode ok)
 
 This app should **start and build without secrets**. First validation step: visit **`/config`**.
-
 ### Client (safe to expose)
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
@@ -139,7 +138,7 @@ Data lives under:
 
 ### Firebase security rules examples
 
-See `firestore.rules.example` (or `docs/firebase/firestore.rules.example`) for an **admin-only** rules baseline for the Memories module.
+See `docs/firebase/firestore.rules.example` (or `firestore.rules.example`) for an **admin-only** rules baseline for the Memories module.
 
 ### Example plan JSON output (strict)
 

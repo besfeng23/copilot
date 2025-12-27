@@ -17,6 +17,8 @@ function isPublicPath(pathname: string) {
   // Public API / health checks
   if (pathname === "/api/health") return true;
   if (pathname === "/api/health/env") return true;
+  if (pathname === "/api/config") return true;
+  if (pathname === "/api/diag/env") return true;
 
   return false;
 }
@@ -43,13 +45,6 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Never redirect API calls from middleware; let API routes return 401/403 JSON.
-  // Explicitly include /api/config so env-preflight is always reachable.
-  if (pathname === "/api/config") {
-    return NextResponse.next();
-  }
-  if (pathname === "/api/diag/env") {
-    return NextResponse.next();
-  }
   if (pathname.startsWith("/api/") || pathname.startsWith("/app/api/")) {
     return NextResponse.next();
   }
