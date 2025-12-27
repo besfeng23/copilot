@@ -8,6 +8,17 @@ type EnvDiag = {
   server: { ok: boolean; missing: string[] };
 };
 
+function redactErrorMessage(input: unknown): string {
+  const raw = typeof input === "string" ? input : input instanceof Error ? input.message : String(input ?? "");
+  // Redact common secret-ish patterns if they ever appear in an error string.
+  return raw
+    .replace(/AIzaSy[0-9A-Za-z_-]{10,}/g, "[REDACTED]")
+    .replace(/-----BEGIN [^-]+ PRIVATE KEY-----[\s\S]*?-----END [^-]+ PRIVATE KEY-----/g, "[REDACTED]")
+    .replace(/client_email["']?\s*:\s*["'][^"']+["']/gi, "client_email:\"[REDACTED]\"")
+    .replace(/private_key["']?\s*:\s*["'][^"']+["']/gi, "private_key:\"[REDACTED]\"")
+    .slice(0, 800);
+}
+
 export default function GlobalError({
   error,
 }: {
@@ -50,6 +61,16 @@ export default function GlobalError({
           <p className="text-sm text-muted-foreground">
             Something went wrong while rendering the application. If this persists, check environment variables and redeploy.
           </p>
+
+          <div className="rounded-md border p-4 text-sm space-y-2">
+            <div className="font-medium">Error details (safe)</div>
+            <div className="text-muted-foreground">
+              digest: <code>{error?.digest ?? "n/a"}</code>
+            </div>
+            <div className="text-muted-foreground">
+              message: <code>{redactErrorMessage(error)}</code>
+            </div>
+          </div>
 
           <div className="rounded-md border p-4 text-sm space-y-3">
             <div className="font-medium">Diagnostics (names only)</div>
