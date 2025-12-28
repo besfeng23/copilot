@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(orgId) {
+      return get(/databases/$(database)/documents/orgs/$(orgId)/members/$(request.auth.uid));
+    }
+
+    function isOrgMember(orgId) {
+      return signedIn() && memberDoc(orgId).exists();
+    }
+
+    function isOrgAdmin(orgId) {
+      return isOrgMember(orgId) && (
+        memberDoc(orgId).data.role in ['admin', 'owner']
+      );
+    }
+
+    // Default: deny everything.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Memories Console (recommended: admin-only reads+writes) ---
+    match /orgs/{orgId}/memories/{memoryId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/people/{personId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/tags/{tagId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    match /orgs/{orgId}/memoryEmbeddings/{memoryId} {
+      allow read, write: if isOrgAdmin(orgId);
+    }
+
+    // --- Existing org membership (example) ---
+    match /orgs/{orgId}/members/{uid} {
+      // Members can read their own membership doc; admins can read all.
+      allow read: if signedIn() && (request.auth.uid == uid || isOrgAdmin(orgId));
+      // Writes: typically server-only. If you want client writes, scope tightly.
+      allow write: if false;
+    }
+
+// ========================
+// Mastermind (owner-scoped)
+// Collections:
+// - mastermind_projects/{projectId}
+//   - pm_messages/{messageId} (append-only)
+//   - artifacts/{artifactId}  (append-only)
+//   - brain/{docId}           (brief doc: read/update by owner)
+// ========================
+function mmSignedIn() { return request.auth != null; }
+function mmOwner(projectId) {
+  return mmSignedIn() &&
+    get(/databases/$(database)/documents/mastermind_projects/$(projectId)).data.ownerUid == request.auth.uid;
+}
+
+match /mastermind_projects/{projectId} {
+  allow read: if mmSignedIn() && resource.data.ownerUid == request.auth.uid;
+  allow create: if mmSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+  allow update: if mmSignedIn() && resource.data.ownerUid == request.auth.uid;
+  allow delete: if false;
+
+  match /pm_messages/{messageId} {
+    allow read: if mmOwner(projectId);
+    allow create: if mmOwner(projectId) && request.resource.data.ownerUid == request.auth.uid;
+    allow update, delete: if false;
+  }
+
+  match /artifacts/{artifactId} {
+    allow read: if mmOwner(projectId);
+    allow create: if mmOwner(projectId) && request.resource.data.ownerUid == request.auth.uid;
+    allow update, delete: if false;
+  }
+
+  match /brain/{docId} {
+    allow read: if mmOwner(projectId);
+    allow create, update: if mmOwner(projectId);
+    allow delete: if false;
+  }
+}
+  }
+}
